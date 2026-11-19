@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: fastapi-production-app:latest
+    #container_name: fastapi_app
+    environment:
+      - ENVIRONMENT=production
+    ports:
+      - "8000"
+    deploy:
+      replicas: ${REPLICA_COUNT:-2}
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+        reservations:
+          cpus: '0.10'
+          memory: 64M
+    restart: unless-stopped
+    healthcheck:
+        test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=2).read()"]
+        interval: 10s
+        timeout: 3s
+        retries: 3
+        start_period: 5s
+    networks:
+      - app-net
+
+networks:
+  app-net:
+    driver: bridge
